@@ -1,0 +1,1191 @@
+<!--
+ECO Monitor / Smart Energy Guardian - Dashboard (Light Theme + Header + Facts + Settings + Eco Score + About)
+
+How to run:
+- Save as smart_energy_dashboard.html and open in Chrome/Edge
+- Or upload to Replit/Glitch and open the HTTPS URL
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ECO Monitor — Smart Energy Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --accent:#2563eb;
+      --accent-soft:#e0edff;
+      --accent-dark:#1d4ed8;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --border:#e2e8f0;
+      --text:#1b263b;
+      --muted:#64748b;
+      --eco-good:#16a34a;
+      --eco-medium:#f97316;
+      --eco-poor:#dc2626;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background:var(--bg);
+      margin:0;
+      padding:24px;
+      color:var(--text);
+    }
+
+    /* Layout */
+    header{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 18px;
+      border-radius:16px;
+      background:#ffffff;
+      box-shadow:0 8px 24px rgba(15,23,42,0.06);
+      border:1px solid var(--border);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .logo-circle{
+      width:40px;
+      height:40px;
+      border-radius:999px;
+      background:linear-gradient(135deg,#22c55e,#a3e635);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      color:#0f172a;
+      font-size:20px;
+      box-shadow:0 6px 16px rgba(22,163,74,0.35);
+    }
+    h1{
+      margin:0;
+      font-size:22px;
+      color:var(--text);
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .nav{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .nav a{
+      font-size:13px;
+      padding:6px 12px;
+      border-radius:999px;
+      text-decoration:none;
+      color:var(--muted);
+      border:1px solid transparent;
+    }
+    .nav a.active{
+      background:var(--accent-soft);
+      color:var(--accent-dark);
+      border-color:var(--accent-soft);
+      font-weight:500;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    button{
+      background:var(--accent);
+      border:none;
+      color:white;
+      padding:8px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:13px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    button.secondary{
+      background:#e2e8f0;
+      color:var(--text);
+    }
+    .small{
+      font-size:12px;
+      padding:6px 10px;
+    }
+    button:hover{
+      background:var(--accent-dark);
+    }
+    button.secondary:hover{
+      background:#cbd5e1;
+    }
+
+    main{
+      margin-top:20px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:18px;
+    }
+    .grid-half{
+      display:grid;
+      grid-template-columns:2fr 1fr;
+      gap:18px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 6px 18px rgba(21,30,54,0.06);
+      border:1px solid var(--border);
+    }
+    .card-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .tag{
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      background:#e2e8f0;
+      color:#475569;
+    }
+    .badge-soft{
+      background:var(--accent-soft);
+      color:var(--accent-dark);
+      border-radius:999px;
+      padding:3px 8px;
+      font-size:11px;
+    }
+
+    .big{
+      font-size:28px;
+      font-weight:700;
+      color:#0b2140;
+    }
+    .muted{
+      color:#55607a;
+      font-size:13px;
+    }
+    .row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    canvas{background:transparent}
+    .two-col{grid-column:span 2}
+    .footer{
+      margin-top:8px;
+      color:#6b7280;
+      font-size:12px;
+      text-align:right;
+    }
+    input[type=file]{display:none}
+    .file-label{
+      display:inline-block;
+      padding:8px 10px;
+      border-radius:999px;
+      background:#ffffff;
+      border:1px dashed #cbd5e1;
+      cursor:pointer;
+      font-size:12px;
+      color:#334155;
+    }
+    .hint{font-size:12px;color:#6b7280}
+
+    /* Facts & Settings */
+    .facts-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-top:10px;
+      font-size:13px;
+    }
+    .fact-pill{
+      background:#f8fafc;
+      border-radius:12px;
+      padding:10px 12px;
+      border:1px solid #e2e8f0;
+    }
+    .fact-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+      color:#94a3b8;
+      margin-bottom:3px;
+    }
+    .fact-value{
+      font-weight:600;
+      color:#1e293b;
+    }
+
+    .settings-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:16px;
+      margin-top:10px;
+    }
+    .settings-item{
+      font-size:13px;
+    }
+    .settings-item label{
+      display:block;
+      margin-bottom:4px;
+      color:#475569;
+      font-weight:500;
+    }
+    .settings-item input,
+    .settings-item select{
+      width:100%;
+      padding:6px 8px;
+      border-radius:10px;
+      border:1px solid #cbd5e1;
+      font-size:13px;
+      outline:none;
+      background:#ffffff;
+    }
+    .settings-item small{
+      color:#94a3b8;
+      font-size:11px;
+    }
+
+    table{
+      font-size:13px;
+      width:100%;
+      border-collapse:collapse;
+    }
+    th, td{
+      border-bottom:1px solid #e2e8f0;
+    }
+
+    /* Eco Score section */
+    #eco-score .eco-layout{
+      display:grid;
+      grid-template-columns:1.4fr 1.6fr;
+      gap:18px;
+    }
+    .eco-score-main{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-start;
+      justify-content:center;
+      padding:8px 0;
+    }
+    .eco-score-number{
+      font-size:44px;
+      font-weight:800;
+    }
+    .eco-score-label{
+      font-size:14px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+    }
+    .eco-bar-wrapper{
+      width:100%;
+      border-radius:999px;
+      background:#e5e7eb;
+      overflow:hidden;
+      height:12px;
+      margin-top:6px;
+    }
+    .eco-bar-fill{
+      height:12px;
+      width:0%;
+      border-radius:999px;
+      transition:width 0.4s ease;
+    }
+    .eco-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:10px;
+    }
+    .eco-tag{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#eef2ff;
+      color:#4c1d95;
+    }
+    .eco-tips{
+      font-size:13px;
+      margin-top:4px;
+    }
+    .eco-tips ul{
+      margin:6px 0 0 18px;
+      padding:0;
+    }
+
+    /* About section */
+    #about .about-grid{
+      display:grid;
+      grid-template-columns:2fr 1.5fr;
+      gap:18px;
+    }
+    .about-block-title{
+      font-size:14px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      color:#64748b;
+      margin-bottom:6px;
+    }
+    .about-main-text{
+      font-size:14px;
+      color:#111827;
+      line-height:1.6;
+    }
+    .about-pill{
+      background:#f8fafc;
+      border-radius:14px;
+      padding:10px 12px;
+      border:1px solid #e2e8f0;
+      margin-bottom:8px;
+      font-size:13px;
+    }
+    .about-pill strong{
+      display:block;
+      margin-bottom:3px;
+    }
+
+    @media(max-width:1100px){
+      header{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .grid,
+      .grid-half{
+        grid-template-columns:1fr;
+      }
+      .two-col{grid-column:span 1}
+      .settings-grid{
+        grid-template-columns:1fr;
+      }
+      #eco-score .eco-layout{
+        grid-template-columns:1fr;
+      }
+      #about .about-grid{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo-circle">E</div>
+      <div>
+        <h1>ECO Monitor</h1>
+        <div class="subtitle">Smart Energy Guardian • AI-powered home dashboard for Developed India 2047</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="#dashboard" class="nav-link active">Dashboard</a>
+      <a href="#eco-score" class="nav-link">Eco Score</a>
+      <a href="#facts" class="nav-link">Facts</a>
+      <a href="#settings" class="nav-link">Settings</a>
+      <a href="#about" class="nav-link">About</a>
+    </nav>
+
+    <div class="controls">
+      <button id="loadSample" class="small">Load sample data</button>
+      <button id="startSim" class="small">Start simulation</button>
+      <button id="stopSim" class="small" style="display:none">Stop</button>
+      <label class="file-label" for="fileInput">Upload JSON/CSV</label>
+      <input id="fileInput" type="file" accept=".json,.csv" />
+      <button id="exportSummary" class="small secondary">Copy summary</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- DASHBOARD SECTION -->
+    <section id="dashboard">
+      <div class="grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="muted">Current power</div>
+            <span class="badge-soft">Live</span>
+          </div>
+          <div class="big" id="currentPower">0 W</div>
+          <div class="muted">Last update: <span id="lastUpdate">-</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="muted">Energy today</div>
+            <span class="tag" id="tariffTag">Tariff: ₹10 / kWh</span>
+          </div>
+          <div class="big" id="energyToday">0.00 kWh</div>
+          <div class="muted">Estimated cost: <span id="currencySymbol">₹</span><span id="costToday">0.00</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="muted">Peak power (this month)</div>
+          </div>
+          <div class="big" id="peakPower">0 W</div>
+          <div class="muted" id="peakTime">—</div>
+        </div>
+
+        <div class="card two-col">
+          <div class="card-header">
+            <div class="muted">Total power over time</div>
+            <span class="tag">Line chart</span>
+          </div>
+          <canvas id="lineChart" height="140"></canvas>
+        </div>
+
+        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
+          <div class="card-header">
+            <div class="muted">Breakdown by zone</div>
+            <span class="tag">Pie chart</span>
+          </div>
+          <div>
+            <canvas id="pieChart" height="180"></canvas>
+          </div>
+          <div style="margin-top:10px">
+            <div id="breakdownList" style="margin-top:4px;font-size:13px"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="muted">Digital wellbeing & AI insights</div>
+            <span class="tag">Insights</span>
+          </div>
+          <div id="insights" style="margin-top:10px;font-size:13px"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <b>Raw data (latest 100 readings)</b>
+            <div class="hint">You can upload a JSON/CSV or use sample/simulated data. Click a row to view details.</div>
+          </div>
+          <div class="muted">Zones: Bedroom • Kitchen • Living Room</div>
+        </div>
+        <div style="max-height:260px;overflow:auto;margin-top:8px">
+          <table id="dataTable">
+            <thead style="background:#f1f5f9;position:sticky;top:0">
+              <tr>
+                <th style="padding:8px;text-align:left">Time</th>
+                <th style="padding:8px;text-align:left">Zone</th>
+                <th style="padding:8px;text-align:left">Power (W)</th>
+                <th style="padding:8px;text-align:left">Energy (Wh)</th>
+              </tr>
+            </thead>
+            <tbody id="dataBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ECO SCORE SECTION -->
+    <section id="eco-score">
+      <div class="card">
+        <div class="card-header">
+          <div class="muted">Eco Score</div>
+          <span class="tag">Impact meter</span>
+        </div>
+        <div class="eco-layout">
+          <!-- Left: score and bar -->
+          <div class="eco-score-main">
+            <div class="eco-score-label" id="ecoScoreLabel">Score</div>
+            <div class="eco-score-number" id="ecoScoreValue">–</div>
+            <div class="muted" id="ecoScoreStatusText">Load some data to calculate Eco Score.</div>
+            <div class="eco-bar-wrapper">
+              <div class="eco-bar-fill" id="ecoScoreBar"></div>
+            </div>
+            <div class="eco-tags" id="ecoScoreTags">
+              <!-- filled by JS -->
+            </div>
+          </div>
+
+          <!-- Right: explanation & tips -->
+          <div>
+            <div class="about-block-title">How is Eco Score calculated?</div>
+            <div class="eco-tips" id="ecoScoreExplanation">
+              Eco Score is a simple indicator (0–100) that rewards:
+              <ul>
+                <li>Lower daily energy use per room</li>
+                <li>Balanced usage across rooms</li>
+                <li>Shorter peak spikes at night</li>
+              </ul>
+            </div>
+            <div class="about-block-title" style="margin-top:12px;">Personalized eco tips</div>
+            <div class="eco-tips" id="ecoScoreTips">
+              Connect your Arduino and collect real readings to receive tailored energy-saving tips.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FACTS SECTION -->
+    <section id="facts">
+      <div class="card">
+        <div class="card-header">
+          <div class="muted">Usage facts for today</div>
+          <span class="tag">Quick facts</span>
+        </div>
+        <div class="facts-grid" id="factsList">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS SECTION -->
+    <section id="settings">
+      <div class="card">
+        <div class="card-header">
+          <div class="muted">Settings</div>
+          <span class="tag">Customize</span>
+        </div>
+        <div class="settings-grid">
+          <div class="settings-item">
+            <label for="costInput">Cost per unit (₹ / kWh)</label>
+            <input type="number" id="costInput" min="1" max="50" value="10" step="0.5">
+            <small>Use your local electricity tariff (e.g., 7–12 ₹/kWh).</small>
+          </div>
+          <div class="settings-item">
+            <label for="currencySelect">Currency</label>
+            <select id="currencySelect">
+              <option value="₹" selected>₹ Indian Rupee</option>
+              <option value="$">$ US Dollar</option>
+              <option value="€">€ Euro</option>
+            </select>
+            <small>Only changes the symbol on the dashboard.</small>
+          </div>
+          <div class="settings-item">
+            <label for="simSpeed">Simulation speed</label>
+            <select id="simSpeed">
+              <option value="2000" selected>Normal (2 sec/update)</option>
+              <option value="1000">Fast (1 sec/update)</option>
+              <option value="5000">Slow (5 sec/update)</option>
+            </select>
+            <small>Applies to “Start simulation” mode only.</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about">
+      <div class="card">
+        <div class="card-header">
+          <div class="muted">About ECO Monitor</div>
+          <span class="tag">Project story</span>
+        </div>
+        <div class="about-grid">
+          <!-- Left: main description -->
+          <div>
+            <div class="about-block-title">What this website does</div>
+            <div class="about-main-text">
+              ECO Monitor is a student-built smart energy dashboard that connects to real sensors
+              in a model house. It reads current values from ACS712 sensors via an Arduino UNO,
+              converts them into power and energy, and visualises everything as clear graphs and
+              insights.
+              <br><br>
+              The goal is to make electricity usage <b>visible, understandable, and actionable</b>.
+              Instead of just paying a bill at the end of the month, ECO Monitor helps families
+              see what is happening in each room in real time — which room is using the most power,
+              when peak usage happens, and how small changes in behaviour can save both energy and money.
+            </div>
+
+            <div class="about-block-title" style="margin-top:18px;">How it can change society</div>
+            <div class="about-main-text">
+              If every home and classroom had an energy dashboard like ECO Monitor:
+              <ul>
+                <li>Students would grow up with <b>better energy habits</b>.</li>
+                <li>Families would become more aware of <b>hidden wastage</b> like standby power.</li>
+                <li>Communities could reduce their overall consumption and move closer to the
+                  vision of a <b>smart, sustainable India 2047</b>.</li>
+              </ul>
+              ECO Monitor is a small prototype of that future: a combination of electronics,
+              coding, and AI-style analytics that encourages responsible, climate-friendly choices.
+            </div>
+          </div>
+
+          <!-- Right: developer & quick facts -->
+          <div>
+            <div class="about-block-title">About the developer</div>
+            <div class="about-pill">
+              <strong>Student Developer</strong>
+              This dashboard was created by a Class 9 student who wanted to combine
+              Arduino, sensors and web development to solve a real problem: wasting electricity
+              without even realising it.
+            </div>
+            <div class="about-pill">
+              <strong>Tech Stack</strong>
+              • Arduino UNO + ACS712 sensors<br>
+              • HTML, CSS, JavaScript<br>
+              • Chart.js for graphs<br>
+              • WebSerial to talk to Arduino<br>
+              • Optional hosting on Replit or similar platforms
+            </div>
+            <div class="about-pill">
+              <strong>Vision</strong>
+              Make “energy awareness” as normal as checking the weather, and inspire other
+              students to build practical AI + IoT projects that help society.
+            </div>
+            <div class="about-pill">
+              <strong>How schools can use this</strong>
+              • Demonstrate IoT and AI concepts<br>
+              • Run energy-saving competitions between classes<br>
+              • Integrate with science fairs, ATL labs, and STEM clubs
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      ECO Monitor • Smart homes for a greener India 2047 • Demo dashboard (front-end only)
+    </div>
+  </main>
+
+<script>
+/* ========= SAMPLE DATA GENERATOR ========= */
+function genSampleData(hours=24){
+  const zones = ['Bedroom','Kitchen','Living Room'];
+  const now = new Date();
+  const start = new Date(now.getTime() - hours*60*60*1000);
+  let data = [];
+  for(let t = start.getTime(); t <= now.getTime(); t += 5*60*1000){
+    const dt = new Date(t);
+    const hour = dt.getHours();
+    let b = 10 + Math.random()*10 + (hour>=21 || hour<7 ? 30 : 0); // bedroom usage at night
+    let k = 5 + Math.random()*20 + (hour>=7 && hour<9 ? 80 : 0) + (hour>=19 && hour<21 ? 40 : 0); // kitchen spikes
+    let l = 20 + Math.random()*25 + (hour>=18 && hour<22 ? 70 : 0); // living room evening
+    const zonesVals = [b,k,l];
+    zonesVals.forEach((val, idx)=>{
+      data.push({
+        timestamp: new Date(dt).toISOString(),
+        zone: zones[idx],
+        power_W: Math.round(val)
+      })
+    })
+  }
+  return data;
+}
+
+/* ========= GLOBAL STATE ========= */
+let readings = []; // array of {timestamp, zone, power_W}
+let simInterval = null;
+let simIntervalMs = 2000;
+let chartLine, chartPie;
+let costPerKWh = 10; // editable in settings
+let currencySymbol = "₹";
+
+/* ========= HELPERS ========= */
+function formatTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleString();
+}
+
+function calculateAggregates(){
+  if(readings.length === 0) return null;
+
+  const latestByZone = {};
+  readings.slice().reverse().forEach(r=>{ if(!latestByZone[r.zone]) latestByZone[r.zone]=r; });
+  const currentPower = Object.values(latestByZone).reduce((s,r)=>s + r.power_W, 0);
+
+  const timesMap = {}; // time->sumPowerW
+  readings.forEach(r=>{
+    const t = r.timestamp;
+    if(!timesMap[t]) timesMap[t] = 0;
+    timesMap[t] += r.power_W;
+  });
+  const times = Object.keys(timesMap).sort();
+  let energyWhToday = 0;
+  for(let i=1;i<times.length;i++){
+    const t0 = new Date(times[i-1]);
+    const t1 = new Date(times[i]);
+    const dtH = (t1 - t0)/3600000; // hours
+    const pAvg = (timesMap[times[i-1]] + timesMap[times[i]])/2; // W
+    energyWhToday += pAvg * dtH; // Wh
+  }
+  const energyKWh = (energyWhToday/1000).toFixed(3);
+
+  let peak = {power:0,time:null};
+  readings.forEach(r=>{ if(r.power_W > peak.power){ peak.power = r.power_W; peak.time = r.timestamp; } });
+
+  const zoneSums = {};
+  readings.forEach(r=>{ if(!zoneSums[r.zone]) zoneSums[r.zone]=0; zoneSums[r.zone]+=r.power_W; });
+
+  // duration estimate
+  let durationH = 0;
+  const uniqueTimes = [...new Set(readings.map(r=>r.timestamp))].sort();
+  if(uniqueTimes.length>1){
+    durationH = (new Date(uniqueTimes[uniqueTimes.length-1]) - new Date(uniqueTimes[0]))/3600000;
+  }
+
+  return {currentPower, energyKWh, peak, zoneSums, sampleCount: readings.length, durationH};
+}
+
+/* ========= FACTS UI ========= */
+function updateFacts(agg){
+  const factsEl = document.getElementById('factsList');
+  if(!agg){ 
+    factsEl.innerHTML = '<div class="fact-pill"><div class="fact-label">Status</div><div class="fact-value">No data loaded yet</div></div>';
+    return;
+  }
+
+  const co2 = (parseFloat(agg.energyKWh) * 0.82).toFixed(2); // 0.82 kg/kWh rough
+
+  // highest usage zone
+  let topZone = '-';
+  let topVal = 0;
+  for(const z in agg.zoneSums){
+    if(agg.zoneSums[z] > topVal){
+      topVal = agg.zoneSums[z];
+      topZone = z;
+    }
+  }
+
+  factsEl.innerHTML = `
+    <div class="fact-pill">
+      <div class="fact-label">Total energy today</div>
+      <div class="fact-value">${agg.energyKWh} kWh</div>
+      <div class="muted" style="font-size:11px;margin-top:4px;">Approx. cost: ${currencySymbol}${(parseFloat(agg.energyKWh)*costPerKWh).toFixed(2)}</div>
+    </div>
+    <div class="fact-pill">
+      <div class="fact-label">Highest usage zone</div>
+      <div class="fact-value">${topZone}</div>
+      <div class="muted" style="font-size:11px;margin-top:4px;">Based on power samples collected.</div>
+    </div>
+    <div class="fact-pill">
+      <div class="fact-label">Monitoring duration</div>
+      <div class="fact-value">${agg.durationH.toFixed(1)} hours</div>
+      <div class="muted" style="font-size:11px;margin-top:4px;">Samples: ${agg.sampleCount} • Estimated CO2: ${co2} kg</div>
+    </div>
+  `;
+}
+
+function updateBreakdownList(agg){
+  const listEl = document.getElementById('breakdownList');
+  const zones = Object.keys(agg.zoneSums);
+  if(!zones.length){ listEl.textContent = 'No data yet.'; return; }
+  const total = zones.reduce((s,z)=>s+agg.zoneSums[z],0);
+  listEl.innerHTML = zones.map(z=>{
+    const val = agg.zoneSums[z];
+    const pct = total ? ((val/total)*100).toFixed(1) : 0;
+    return `<div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+      <span>${z}</span><span>${pct}% of samples</span>
+    </div>`;
+  }).join('');
+}
+
+/* ========= ECO SCORE UI ========= */
+function updateEcoScore(agg){
+  const scoreEl = document.getElementById('ecoScoreValue');
+  const labelEl = document.getElementById('ecoScoreLabel');
+  const statusEl = document.getElementById('ecoScoreStatusText');
+  const barEl = document.getElementById('ecoScoreBar');
+  const tagsEl = document.getElementById('ecoScoreTags');
+  const tipsEl = document.getElementById('ecoScoreTips');
+
+  if(!agg){
+    scoreEl.textContent = '–';
+    labelEl.textContent = 'Eco Score';
+    statusEl.textContent = 'Load sample data or connect your Arduino to calculate an Eco Score.';
+    barEl.style.width = '0%';
+    barEl.style.backgroundColor = '#9ca3af';
+    tagsEl.innerHTML = '';
+    tipsEl.textContent = 'Connect your setup and collect at least a few minutes of data for personalized suggestions.';
+    return;
+  }
+
+  const energy = parseFloat(agg.energyKWh);
+  const duration = agg.durationH || 1;
+  const rooms = Object.keys(agg.zoneSums).length || 1;
+
+  // simple metrics
+  const energyPerRoomPerHour = energy / (rooms * Math.max(duration, 0.5));
+  const peak = agg.peak.power;
+
+  // Start from 100 and subtract penalties
+  let score = 100;
+
+  // penalty for high energy per room per hour
+  if(energyPerRoomPerHour > 0.25) score -= 20;
+  if(energyPerRoomPerHour > 0.5) score -= 25;
+  if(energyPerRoomPerHour > 1.0) score -= 20;
+
+  // penalty for high peak spikes
+  if(peak > 500) score -= 10;
+  if(peak > 1000) score -= 10;
+
+  // penalty for strong imbalance between rooms
+  const zoneValues = Object.values(agg.zoneSums);
+  const maxZone = Math.max(...zoneValues);
+  const minZone = Math.min(...zoneValues);
+  if(minZone > 0 && maxZone/minZone > 3){ // one room much heavier than others
+    score -= 10;
+  }
+
+  if(score < 0) score = 0;
+  if(score > 100) score = 100;
+
+  const rounded = Math.round(score);
+  scoreEl.textContent = rounded.toString();
+  labelEl.textContent = 'Eco Score';
+
+  // status & colours
+  let color = 'var(--eco-good)';
+  let status = 'Excellent';
+  let message = 'Your usage pattern looks efficient and balanced. Great job!';
+
+  if(rounded < 80){
+    color = 'var(--eco-medium)';
+    status = 'Good';
+    message = 'You are doing well, but there is still room to reduce peak loads and avoid wastage.';
+  }
+  if(rounded < 60){
+    color = 'var(--eco-poor)';
+    status = 'Needs improvement';
+    message = 'Energy usage is quite high. Try reducing night-time loads and switching off unused devices.';
+  }
+
+  statusEl.textContent = status + ' • ' + message;
+  barEl.style.width = rounded + '%';
+  barEl.style.backgroundColor = color;
+
+  // tags
+  tagsEl.innerHTML = '';
+  const tagList = [];
+  if(energyPerRoomPerHour <= 0.25) tagList.push('Low energy per room');
+  else if(energyPerRoomPerHour <= 0.5) tagList.push('Moderate energy per room');
+  else tagList.push('High energy per room');
+
+  if(peak <= 500) tagList.push('No huge spikes');
+  else if(peak <= 1000) tagList.push('Medium peaks');
+  else tagList.push('Very high peaks');
+
+  if(minZone > 0 && maxZone/minZone <= 3) tagList.push('Balanced rooms');
+  else tagList.push('One room dominates');
+
+  tagsEl.innerHTML = tagList.map(t=>`<span class="eco-tag">${t}</span>`).join('');
+
+  // tips
+  const tips = [];
+  if(energyPerRoomPerHour > 0.5){
+    tips.push('Try turning off fans, lights or chargers in empty rooms to bring down average usage.');
+  } else {
+    tips.push('Maintain your good habit of switching things off when not needed.');
+  }
+  if(peak > 800){
+    tips.push('Stagger heavy appliances (iron, heater, oven) instead of using them all at once to avoid big spikes.');
+  }
+  if(maxZone/minZone > 3){
+    tips.push('Focus first on the highest-usage room. Small changes there will give the biggest savings.');
+  } else {
+    tips.push('All rooms look fairly balanced. Keep monitoring to maintain this balance.');
+  }
+  tipsEl.innerHTML = '<ul>' + tips.map(t=>`<li>${t}</li>`).join('') + '</ul>';
+}
+
+/* ========= DASHBOARD UPDATE ========= */
+function updateDashboard(){
+  const agg = calculateAggregates();
+  if(!agg) {
+    updateFacts(null);
+    updateEcoScore(null);
+    return;
+  }
+
+  document.getElementById('currentPower').innerText = agg.currentPower + ' W';
+  document.getElementById('energyToday').innerText = agg.energyKWh + ' kWh';
+  document.getElementById('costToday').innerText = (parseFloat(agg.energyKWh) * costPerKWh).toFixed(2);
+  document.getElementById('currencySymbol').innerText = currencySymbol;
+  document.getElementById('tariffTag').innerText = `Tariff: ${currencySymbol}${costPerKWh} / kWh`;
+  document.getElementById('peakPower').innerText = agg.peak.power + ' W';
+  document.getElementById('peakTime').innerText = agg.peak.time ? 'At ' + formatTime(agg.peak.time) : '-';
+
+  const timesMap = {};
+  readings.forEach(r=>{ timesMap[r.timestamp] = (timesMap[r.timestamp]||0) + r.power_W; });
+  const times = Object.keys(timesMap).sort();
+  const labels = times.map(t=>new Date(t).toLocaleTimeString());
+  const data = times.map(t=>timesMap[t]);
+  chartLine.data.labels = labels.slice(-200);
+  chartLine.data.datasets[0].data = data.slice(-200);
+  chartLine.update();
+
+  const zones = Object.keys(agg.zoneSums);
+  const sums = zones.map(z=>agg.zoneSums[z]);
+  chartPie.data.labels = zones;
+  chartPie.data.datasets[0].data = sums;
+  chartPie.update();
+
+  const body = document.getElementById('dataBody');
+  body.innerHTML = '';
+  const last = readings.slice(-100).reverse();
+  last.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.innerHTML = `<td style="padding:8px">${new Date(r.timestamp).toLocaleString()}</td>
+                    <td style="padding:8px">${r.zone}</td>
+                    <td style="padding:8px">${r.power_W}</td>
+                    <td style="padding:8px">-</td>`;
+    tr.onclick = ()=>{
+      alert('Reading details:\n' + r.zone + '\n' + new Date(r.timestamp).toLocaleString() + '\n' + r.power_W + ' W');
+    };
+    body.appendChild(tr);
+  });
+
+  // insights
+  const insights = [];
+  const zoneVals = {};
+  readings.forEach(r=>{ zoneVals[r.zone] = zoneVals[r.zone] || []; zoneVals[r.zone].push(r.power_W); });
+  for(const z in zoneVals){
+    const avg = zoneVals[z].reduce((a,b)=>a+b,0)/zoneVals[z].length;
+    if(z==='Bedroom' && avg > 25) insights.push('Bedroom has relatively high usage — try using power-saving lights or auto-off timers.');
+    if(z==='Living Room' && avg > 50) insights.push('Living Room is very active — consider shorter TV time or energy-efficient devices.');
+    if(z==='Kitchen' && avg > 60) insights.push('Kitchen peaks at meal times — using efficient appliances can lower the spike.');
+  }
+  if(insights.length===0) insights.push('All zones look balanced — keep up the good energy habits!');
+  document.getElementById('insights').innerHTML = insights.map(i=>'<div style="margin-bottom:6px">• '+i+'</div>').join('');
+
+  updateFacts(agg);
+  updateBreakdownList(agg);
+  updateEcoScore(agg);
+  document.getElementById('lastUpdate').innerText = new Date().toLocaleString();
+}
+
+/* ========= CHARTS ========= */
+function initCharts(){
+  const ctxLine = document.getElementById('lineChart').getContext('2d');
+  chartLine = new Chart(ctxLine, {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Total Power (W)', data: [], tension:0.3, fill:true, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.08)'}] },
+    options:{scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}
+  });
+
+  const ctxPie = document.getElementById('pieChart').getContext('2d');
+  chartPie = new Chart(ctxPie, {
+    type: 'pie',
+    data: { labels: [], datasets: [{ data: [], backgroundColor:['#2563eb','#22c55e','#f97316'] }] },
+    options:{plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+/* ========= DATA LOADING & SIM ========= */
+function loadSample(){
+  readings = genSampleData(24);
+  updateDashboard();
+}
+
+function startSimulation(){
+  if(simInterval) return;
+  readings = genSampleData(2);
+  simInterval = setInterval(()=>{
+    const now = new Date();
+    const hour = now.getHours();
+    const b = 10 + Math.random()*10 + (hour>=21 || hour<7 ? 30 : 0);
+    const k = 5 + Math.random()*20 + (hour>=7 && hour<9 ? 80 : 0) + (hour>=19 && hour<21 ? 40 : 0);
+    const l = 20 + Math.random()*25 + (hour>=18 && hour<22 ? 70 : 0);
+    readings.push({timestamp: now.toISOString(), zone:'Bedroom', power_W: Math.round(b)});
+    readings.push({timestamp: now.toISOString(), zone:'Kitchen', power_W: Math.round(k)});
+    readings.push({timestamp: now.toISOString(), zone:'Living Room', power_W: Math.round(l)});
+    if(readings.length > 5000) readings = readings.slice(-5000);
+    updateDashboard();
+  }, simIntervalMs);
+  document.getElementById('startSim').style.display='none';
+  document.getElementById('stopSim').style.display='inline-block';
+}
+
+function stopSimulation(){
+  clearInterval(simInterval);
+  simInterval=null;
+  document.getElementById('startSim').style.display='inline-block';
+  document.getElementById('stopSim').style.display='none';
+}
+
+/* ========= FILE UPLOAD ========= */
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(){
+    const text = reader.result;
+    try{
+      if(file.name.endsWith('.json')){
+        const js = JSON.parse(text);
+        if(Array.isArray(js)) readings = js; else readings = [js];
+        updateDashboard();
+      } else if(file.name.endsWith('.csv')){
+        const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+        const headers = lines[0].split(',').map(s=>s.trim());
+        const arr = [];
+        for(let i=1;i<lines.length;i++){
+          const vals = lines[i].split(',');
+          const obj = {}; headers.forEach((h,idx)=> obj[h]=vals[idx]);
+          arr.push({timestamp: obj.timestamp || obj.time, zone: obj.zone, power_W: Number(obj.power_W||obj.power)});
+        }
+        readings = arr;
+        updateDashboard();
+      } else {
+        alert('Unsupported file type');
+      }
+    } catch(err){ alert('Error parsing file: '+err.message); }
+  };
+  reader.readAsText(file);
+});
+
+/* ========= SUMMARY COPY ========= */
+document.getElementById('exportSummary').addEventListener('click', ()=>{
+  const agg = calculateAggregates();
+  if(!agg){ alert('No data loaded'); return; }
+  let text = 'ECO Monitor Summary\n';
+  text += 'Current Power: ' + agg.currentPower + ' W\n';
+  text += 'Energy Today: ' + agg.energyKWh + ' kWh (' + currencySymbol + (parseFloat(agg.energyKWh)*costPerKWh).toFixed(2) + ')\n';
+  text += 'Peak Power (this month): ' + agg.peak.power + ' W at ' + (agg.peak.time?new Date(agg.peak.time).toLocaleString():'-') + '\n';
+  text += 'Zone breakdown: \n';
+  for(const z in agg.zoneSums) text += '- '+z+': '+Math.round(agg.zoneSums[z])+' (sum of power samples)\n';
+  navigator.clipboard.writeText(text).then(()=> alert('Summary copied to clipboard. You can paste it in your report.'));
+});
+
+/* ========= SETTINGS ========= */
+document.getElementById('costInput').addEventListener('input',(e)=>{
+  const v = parseFloat(e.target.value);
+  if(!isNaN(v) && v>0){
+    costPerKWh = v;
+    updateDashboard();
+  }
+});
+document.getElementById('currencySelect').addEventListener('change',(e)=>{
+  currencySymbol = e.target.value;
+  updateDashboard();
+});
+document.getElementById('simSpeed').addEventListener('change',(e)=>{
+  simIntervalMs = parseInt(e.target.value) || 2000;
+  if(simInterval){
+    stopSimulation();
+    startSimulation();
+  }
+});
+
+/* ========= NAV ACTIVE STATE ========= */
+document.querySelectorAll('.nav-link').forEach(link=>{
+  link.addEventListener('click', (evt)=>{
+    // smooth scroll to section
+    const href = link.getAttribute('href');
+    if(href && href.startsWith('#')){
+      evt.preventDefault();
+      const target = document.querySelector(href);
+      if(target){
+        window.scrollTo({top:target.offsetTop-80, behavior:'smooth'});
+      }
+    }
+    document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+
+/* ========= BUTTONS ========= */
+document.getElementById('loadSample').addEventListener('click', ()=>{ loadSample(); });
+document.getElementById('startSim').addEventListener('click', ()=>{ startSimulation(); });
+document.getElementById('stopSim').addEventListener('click', ()=>{ stopSimulation(); });
+
+/* ========= INIT ========= */
+initCharts();
+loadSample();
+</script>
+
+<!-- WEB SERIAL: connect Arduino UNO + ACS712 live -->
+<script>
+let serialPort = null;
+let textDecoder = null;
+let reader = null;
+
+async function connectArduinoSerial() {
+  try {
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: 9600 });
+    textDecoder = new TextDecoderStream();
+    serialPort.readable.pipeTo(textDecoder.writable);
+    reader = textDecoder.readable.getReader();
+
+    alert('Arduino connected. Dashboard will receive live sensor data.');
+    readSerialLoop();
+  } catch (e) {
+    alert('Serial connect failed: ' + e);
+  }
+}
+
+async function readSerialLoop() {
+  let buffer = '';
+  while (true) {
+    try {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (value) {
+        buffer += value;
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop();
+        lines.forEach(line => {
+          line = line.trim();
+          if (!line) return;
+          if (line.startsWith('{')) {
+            try {
+              const obj = JSON.parse(line);
+              let ts = obj.timestamp;
+              if (typeof ts === 'string' && ts.startsWith('T+')) {
+                const sec = parseInt(ts.substring(2).replace('s','')) || 0;
+                obj.timestamp = new Date(Date.now() - sec*1000).toISOString();
+              }
+              obj.power_W = Math.round(Number(obj.power_W));
+              readings.push(obj);
+              if (readings.length > 5000) readings = readings.slice(-5000);
+              updateDashboard();
+            } catch(e) {
+              console.log('json parse err', e, line);
+            }
+          } else {
+            console.log('serial:', line);
+          }
+        });
+      }
+    } catch (err) {
+      console.log('read error', err);
+      alert('Serial read error: ' + err);
+      break;
+    }
+  }
+}
+
+// add connect button into controls
+(function(){
+  const btn = document.createElement('button');
+  btn.textContent = 'Connect Arduino';
+  btn.className = 'small secondary';
+  btn.style.marginLeft = '4px';
+  btn.onclick = connectArduinoSerial;
+  document.querySelector('.controls').appendChild(btn);
+})();
+</script>
+
+</body>
+</html>
